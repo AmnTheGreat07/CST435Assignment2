@@ -1,60 +1,61 @@
 from mpi4py import MPI
 import numpy as np
-import pandas as pd
+import time
 
-comm = MPI.COMM_WORLD
-rank = comm.Get_rank()
-size = comm.Get_size()
+def read_matrix(file_path):
+    return np.loadtxt(file_path, delimiter=',')
 
-# Define file paths for the matrices
-matrix_a_file = "matrix_A.csv"
-matrix_b_file = "matrix_B.csv"
+def main():
+    comm = MPI.COMM_WORLD
+    rank = comm.Get_rank()
+    size = comm.Get_size()
 
-# Initialize matrices
-A = None
-B = None
+    if rank == 0:
+        # Read matrices from CSV files
+        matrix_A = read_matrix('matrix_A.csv')
+        matrix_B = read_matrix('matrix_B.csv')
 
-if rank == 0:
-    # Master process reads matrices from CSV files
-    A = pd.read_csv(matrix_a_file, header=None).values
-    B = pd.read_csv(matrix_b_file, header=None).values
+        # Check if matrices can be multiplied
+        if matrix_A.shape[1] != matrix_B.shape[0]:
+            raise ValueError("Number of columns in matrix A must be equal to number of rows in matrix B")
 
-    # Validate dimensions
-    if A.shape[1] != B.shape[0]:
-        raise ValueError("Matrix dimensions do not match for multiplication!")
+        # Split matrix A into chunks to distribute to other processes
+        rows_A = np.array_split(matrix_A, size, axis=0)
+    else:
+        matrix_B = None
+        rows_A = None
 
-# Broadcast dimensions to all processes
-A_rows, A_cols = None, None
-B_rows, B_cols = None, None
-if rank == 0:
-    A_rows, A_cols = A.shape
-    B_rows, B_cols = B.shape
+    # Scatter rows of matrix A to all processes
+    rows_A = comm.scatter(rows_A, root=0)
 
-A_rows = comm.bcast(A_rows, root=0)
-A_cols = comm.bcast(A_cols, root=0)
-B_rows = comm.bcast(B_rows, root=0)
-B_cols = comm.bcast(B_cols, root=0)
+    # Broadcast matrix B to all processes
+    matrix_B = comm.bcast(matrix_B, root=0)
 
-# Scatter rows of matrix A among processes
-local_A = np.zeros((A_rows // size, A_cols)) if rank != 0 else None
-comm.Scatter(A, local_A, root=0)
+    # Start the timer
+    comm.Barrier()  # Synchronize before starting the timer
+    start_time = MPI.Wtime()
 
-# Broadcast entire matrix B to all processes
-if rank != 0:
-    B = np.zeros((B_rows, B_cols))
-comm.Bcast(B, root=0)
+    # Perform local matrix multiplication
+    local_result = np.dot(rows_A, matrix_B)
 
-# Compute local portion of the result matrix
-local_C = np.dot(local_A, B)
+    # Gather results from all processes
+    result = comm.gather(local_result, root=0)
 
-# Gather results at the root process
-C = None
-if rank == 0:
-    C = np.zeros((A_rows, B_cols))
-comm.Gather(local_C, C, root=0)
+    # Stop the timer
+    comm.Barrier()  # Synchronize before stopping the timer
+    end_time = MPI.Wtime()
 
-# Root process writes the result matrix to a CSV file
-if rank == 0:
-    output_file = "result_matrix.csv"
-    pd.DataFrame(C).to_csv(output_file, header=False, index=False)
-    print(f"Matrix multiplication result saved to {output_file}")
+    if rank == 0:
+        # Concatenate the results to form the final result matrix
+        result = np.vstack(result)
+        print("Resultant Matrix:")
+        print(result)
+        
+        # Save the result to a CSV file
+        np.savetxt('result_matrix.csv', result, delimiter=',')
+        
+        # Print the time taken
+        print(f"Time taken for matrix multiplication: {end_time - start_time} seconds")
+
+if __name__ == "__main__":
+    main()
