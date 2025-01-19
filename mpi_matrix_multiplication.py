@@ -1,6 +1,7 @@
 from mpi4py import MPI
 import numpy as np
 import time
+from multiplication import manual_matrix_multiply
 
 def read_matrix(file_path):
     return np.loadtxt(file_path, delimiter=',')
@@ -35,8 +36,8 @@ def main():
     comm.Barrier()  # Synchronize before starting the timer
     start_time = MPI.Wtime()
 
-    # Perform local matrix multiplication
-    local_result = np.dot(rows_A, matrix_B)
+    # Perform manual matrix multiplication locally
+    local_result = manual_matrix_multiply(rows_A, matrix_B)
 
     # Gather results from all processes
     result = comm.gather(local_result, root=0)
@@ -48,14 +49,12 @@ def main():
     if rank == 0:
         # Concatenate the results to form the final result matrix
         result = np.vstack(result)
-        print("Resultant Matrix:")
-        print(result)
         
         # Save the result to a CSV file
         np.savetxt('result_matrix.csv', result, delimiter=',')
         
         # Print the time taken
-        print(f"Time taken for matrix multiplication: {end_time - start_time} seconds")
+        print(f"Time taken for manual matrix multiplication: {end_time - start_time} seconds")
 
 if __name__ == "__main__":
     main()
