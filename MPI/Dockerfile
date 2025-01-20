@@ -9,9 +9,12 @@ RUN apt-get update && apt-get install -y \
 
 # Configure SSH
 RUN mkdir /var/run/sshd && \
-    echo 'root:root' | chpasswd && \  # set root password as 'root' \
+    echo 'root:root' | chpasswd && \
+    # Allow root login
     sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config && \
+    # Enable password authentication
     sed -i 's@#PasswordAuthentication yes@PasswordAuthentication yes@' /etc/ssh/sshd_config && \
+    # Disable strict host key checking
     echo "StrictHostKeyChecking no" >> /etc/ssh/ssh_config
 
 # Generate SSH keys and configure authorized keys for root user
