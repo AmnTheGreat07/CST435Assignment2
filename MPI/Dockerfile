@@ -9,7 +9,7 @@ RUN apt-get update && apt-get install -y \
 
 # Configure SSH
 RUN mkdir /var/run/sshd && \
-    echo 'root:root' | chpasswd && \  # 设置 root 用户密码为 'root'
+    echo 'root:root' | chpasswd && \  # set root password as 'root' \
     sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config && \
     sed -i 's@#PasswordAuthentication yes@PasswordAuthentication yes@' /etc/ssh/sshd_config && \
     echo "StrictHostKeyChecking no" >> /etc/ssh/ssh_config
