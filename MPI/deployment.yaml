@@ -18,7 +18,7 @@ spec:
           - labelSelector:
               matchLabels:
                 app: mpi
-            topologyKey: "kubernetes.io/hostname" # 强制 Pod 分布在不同节点
+            topologyKey: "kubernetes.io/hostname" # Enforce Pods to be distributed across different nodes
       initContainers:
       - name: init-ssh-keys
         image: mpi_ssh_image:latest
