@@ -1,6 +1,7 @@
 ## Tree Structure
 ```
 MPI/
+├── deployment.yaml
 ├── Dockerfile
 ├── matrix_A.csv
 ├── matrix_B.csv
@@ -9,11 +10,13 @@ MPI/
 ├── multiplication.py
 ├── README.md
 ├── requirements.txt
+├── service.yaml
 ├── result_matrix.csv
 ├── single_thread_result_matrix.csv
 └── test.py
 ```
 ## Files Description
+- `deployment.yaml`: Kubernetes deployment file for the MPI matrix multiplication.
 - `Dockerfile`: Dockerfile for building the docker image.
 - `matrix_A.csv`: Random matrix A.
 - `matrix_B.csv`: Random matrix B.
@@ -22,6 +25,7 @@ MPI/
 - `multiplication.py`: Python script to implement the matrix multiplication algorithm.
 - `README.md`: Instructions on how to run the MPI matrix multiplication.
 - `requirements.txt`: Required packages for the docker image.
+- `service.yaml`: Kubernetes service file for the MPI matrix multiplication.
 - `result_matrix.csv`: Result matrix after the MPI parallel computation.
 - `single_thread_result_matrix.csv`: Result matrix after the single-thread computation.
 - `test.py`: Python script to test the matrix multiplication algorithm.
@@ -67,8 +71,10 @@ mpiexec -f hosts -n 2 python mpi_matrix_multiplication.py
 
 ## How to Run In K8s (Minikube)
 1. Install minikube  
-https://minikube.sigs.k8s.io/docs/start/?arch=%2Flinux%2Fx86-64%2Fstable%2Fbinary+download#Service  
-For Linux:
+[Minikube Installation](https://minikube.sigs.k8s.io/docs/start/?arch=%2Flinux%2Fx86-64%2Fstable%2Fbinary+download#Service)  
+Minikube is a tool that makes it easy to run Kubernetes locally. Minikube runs a  Kubernetes cluster inside a VM on your laptop for users looking to try out Kubernetes or develop with it day-to-day.  
+
+- For Linux:
 ```bash
 curl -LO https://github.com/kubernetes/minikube/releases/latest/download/minikube-linux-amd64
 sudo install minikube-linux-amd64 /usr/local/bin/minikube && rm minikube-linux-amd64
@@ -81,8 +87,7 @@ minikube start --nodes 2 --cpus 2 --memory 4096
 ```bash
 ssh-keygen -t rsa -f id_rsa -q -N ""
 ```
-After that, you will have 2 files: `id_rsa` and `id_rsa.pub`.  
-
+- After that, you will have 2 files: `id_rsa` and `id_rsa.pub`.  
 4. Create a Kubernetes secret:
 ```bash
 kubectl create secret generic ssh-keys \
@@ -104,7 +109,7 @@ kubectl apply -f service.yaml
 ```bash
 kubectl get nodes -o wide
 ```
-You will see the IP addresses of the nodes.
+- You will see the IP addresses of the nodes.
 ```bash
 NAME                              READY   STATUS    RESTARTS   AGE   IP           NODE           NOMINATED NODE   READINESS GATES
 mpi-deployment-7b655bd86f-56h7n   1/1     Running   0          54m   10.244.1.2   minikube-m02   <none>           <none>
@@ -129,7 +134,7 @@ mpiexec -f hosts -n 2 python mpi_matrix_multiplication.py
 ```bash
 python test.py
 ```
-##
+---
 Note test.py is signal thread multiplication. You can see the difference between the signal thread and MPI.  
 
 For example:
