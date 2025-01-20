@@ -15,7 +15,7 @@ CST435Assignment2/
 ├── test.py                       # Test script to verify the correctness of MPI parallel computation results
 ```
 
-## How to Run
+## How to Run (For MPI)
 1. Run the following command to generate random matrices A and B and save them as CSV files:
 ```bash
 python matrixs.py
