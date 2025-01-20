@@ -60,7 +60,7 @@ echo "ipaddress1" > hosts
 echo "ipaddress2" >> hosts
 ...
 ```
-8.In main container, Run the following command to run the MPI parallel computation (n=number of nodes):
+8. In main container, Run the following command to run the MPI parallel computation (n=number of nodes):
 ```bash
 mpiexec -f hosts -n 2 python mpi_matrix_multiplication.py
 ```
@@ -100,7 +100,7 @@ minikube image load mpi_ssh_image:latest
 kubectl apply -f deployment.yaml
 kubectl apply -f service.yaml
 ```
-7.See the nodes:
+7. See the nodes:
 ```bash
 kubectl get nodes -o wide
 ```
@@ -129,6 +129,7 @@ mpiexec -f hosts -n 2 python mpi_matrix_multiplication.py
 ```bash
 python test.py
 ```
+##
 Note test.py is signal thread multiplication. You can see the difference between the signal thread and MPI.  
 
 For example:
