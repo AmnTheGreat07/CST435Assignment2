@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mpi-deployment
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: mpi
+  template:
+    metadata:
+      labels:
+        app: mpi
+    spec:
+      initContainers:
+      - name: init-ssh-keys
+        image: mpi_ssh_image:latest
+        imagePullPolicy: IfNotPresent
+        command:
+        - sh
+        - -c
+        - |
+          mkdir -p /root/.ssh
+          ssh-keygen -t rsa -f /root/.ssh/id_rsa -q -N ""
+          cat /root/.ssh/id_rsa.pub >> /root/.ssh/authorized_keys
+          chmod 700 /root/.ssh
+          chmod 600 /root/.ssh/authorized_keys
+        volumeMounts:
+        - name: ssh-key-volume
+          mountPath: /root/.ssh
+      containers:
+      - name: mpi-container
+        image: mpi_ssh_image:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 22
+        volumeMounts:
+        - name: ssh-key-volume
+          mountPath: /root/.ssh
+      volumes:
+      - name: ssh-key-volume
+        persistentVolumeClaim:
+          claimName: ssh-key-pvc
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ssh-key-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
