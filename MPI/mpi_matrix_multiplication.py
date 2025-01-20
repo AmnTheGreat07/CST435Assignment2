@@ -32,6 +32,9 @@ def main():
     # Broadcast matrix B to all processes
     matrix_B = comm.bcast(matrix_B, root=0)
 
+    # Print which rows are being processed by which rank
+    print(f"Rank {rank} is processing rows {rows_A.shape[0]}")
+
     # Start the timer
     comm.Barrier()  # Synchronize before starting the timer
     start_time = MPI.Wtime()
