@@ -12,6 +12,13 @@ spec:
       labels:
         app: mpi
     spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchLabels:
+                app: mpi
+            topologyKey: "kubernetes.io/hostname" # 强制 Pod 分布在不同节点
       initContainers:
       - name: init-ssh-keys
         image: mpi_ssh_image:latest
@@ -20,14 +27,20 @@ spec:
         - sh
         - -c
         - |
-          mkdir -p /root/.ssh
-          ssh-keygen -t rsa -f /root/.ssh/id_rsa -q -N ""
-          cat /root/.ssh/id_rsa.pub >> /root/.ssh/authorized_keys
-          chmod 700 /root/.ssh
-          chmod 600 /root/.ssh/authorized_keys
+          echo "Copying SSH keys to writable directory..."
+          mkdir -p /writable-ssh
+          cp /root/.ssh/id_rsa /writable-ssh/id_rsa
+          cp /root/.ssh/authorized_keys /writable-ssh/authorized_keys
+          chmod 700 /writable-ssh
+          chmod 600 /writable-ssh/id_rsa
+          chmod 600 /writable-ssh/authorized_keys
+          echo "SSH keys setup complete."
         volumeMounts:
         - name: ssh-key-volume
           mountPath: /root/.ssh
+          readOnly: true
+        - name: writable-ssh
+          mountPath: /writable-ssh
       containers:
       - name: mpi-container
         image: mpi_ssh_image:latest
@@ -35,20 +48,11 @@ spec:
         ports:
         - containerPort: 22
         volumeMounts:
-        - name: ssh-key-volume
+        - name: writable-ssh
           mountPath: /root/.ssh
       volumes:
       - name: ssh-key-volume
-        persistentVolumeClaim:
-          claimName: ssh-key-pvc
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: ssh-key-pvc
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 1Gi
+        secret:
+          secretName: ssh-keys
+      - name: writable-ssh
+        emptyDir: {}
