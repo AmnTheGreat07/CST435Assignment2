@@ -105,9 +105,9 @@ minikube image load mpi_ssh_image:latest
 kubectl apply -f deployment.yaml
 kubectl apply -f service.yaml
 ```
-7. See the nodes:
+7. See the pods:
 ```bash
-kubectl get nodes -o wide
+kubectl get pods -o wide
 ```
 - You will see the IP addresses of the nodes.
 ```bash
@@ -134,6 +134,90 @@ mpiexec -f hosts -n 2 python mpi_matrix_multiplication.py
 ```bash
 python test.py
 ```
+## How to Run In K8s (Microk8s)
+1. Install microk8s in every node   
+Microk8s is a lightweight Kubernetes distribution that runs entirely on your workstation or edge device. It is a great solution for users who want to get a Kubernetes cluster up and running quickly.   
+- For Ubuntu:
+```bash
+sudo snap install microk8s --classic
+```
+2. Initialize microk8s master node
+```bash
+microk8s enable dns hostpath-storage
+```
+3. Get the add token from the master node
+```bash
+microk8s add-node
+```
+- you will get a command like this:
+```bash
+microk8s join 10.0.2.15:25000/271e352934d8bd01cd115a3149e0ff23/be48c19219bf
+
+Use the '--worker' flag to join a node as a worker not running the control plane                                     , eg:
+microk8s join 10.0.2.15:25000/271e352934d8bd01cd115a3149e0ff23/be48c19219bf --wo                                     rker
+
+If the node you are adding is not reachable through the default interface you ca                                     n use one of the following:
+microk8s join 10.0.2.15:25000/271e352934d8bd01cd115a3149e0ff23/be48c19219bf
+microk8s join 192.168.1.11:25000/271e352934d8bd01cd115a3149e0ff23/be48c19219bf
+microk8s join 172.17.0.1:25000/271e352934d8bd01cd115a3149e0ff23/be48c19219bf
+```
+4. Add the worker node to the master node
+```bash
+microk8s join ip:port/token
+```
+- You will see the following message:
+```bash
+Successfully joined the cluster.
+```
+- You also can check the nodes with the following command:
+```bash
+microk8s kubectl get nodes
+```
+```bash
+NAME          STATUS   ROLES    AGE   VERSION
+kogasanet01   Ready    <none>   15s   v1.31.4
+kogasanet02   Ready    <none>   99m   v1.31.4
+```
+5. Create a Docker image   
+Follow the same steps as in the [Minikube seection](#how-to-run-in-k8s-minikube).   
+Save Docker image to tar file.
+```bash
+docker save mpi_ssh_image:latest > mpi.tar
+```
+6. Import the docker image to every node
+```bash
+microk8s ctr image import mpi.tar
+```
+7. Create a Kubernetes secret   
+Follow the same steps as in the [Minikube seection](#how-to-run-in-k8s-minikube).
+(using kubectl in microk8s to instead kubeclt)
+```bash
+microk8s kubectl create secret generic ssh-keys \
+  --from-file=id_rsa=./id_rsa \
+  --from-file=id_rsa.pub=./id_rsa.pub \
+  --from-file=authorized_keys=./id_rsa.pub
+```
+8. Apply the k8s yaml file
+```bash
+microk8s kubectl apply -f deployment.yaml
+microk8s kubectl apply -f service.yaml
+```
+9. See the pods
+```bash
+microk8s kubectl get pods -o wide
+```
+```bash
+NAME                             READY   STATUS    RESTARTS   AGE     IP             NODE          NOMINATED NODE   READINESS GATES
+mpi-deployment-5c6d55765-gktct   1/1     Running   0          9m48s   10.1.147.202   kogasanet02   <none>           <none>
+mpi-deployment-5c6d55765-xhpkv   1/1     Running   0          9m48s   10.1.212.1     kogasanet01   <none>           <none>
+```
+10. To the main container
+```bash
+microk8s kubectl exec -it "Your pods name" -- /bin/bash
+```
+11. Set hosts & Run MPI & Test   
+Follow the same steps (9,10,11) as in the [Minikube seection](#how-to-run-in-k8s-minikube).
+
 ---
 Note test.py is signal thread multiplication. You can see the difference between the signal thread and MPI.  
 
