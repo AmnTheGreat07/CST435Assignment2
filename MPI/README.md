@@ -153,10 +153,10 @@ microk8s add-node
 ```bash
 microk8s join 10.0.2.15:25000/271e352934d8bd01cd115a3149e0ff23/be48c19219bf
 
-Use the '--worker' flag to join a node as a worker not running the control plane                                     , eg:
-microk8s join 10.0.2.15:25000/271e352934d8bd01cd115a3149e0ff23/be48c19219bf --wo                                     rker
+Use the '--worker' flag to join a node as a worker not running the control plane, eg:
+microk8s join 10.0.2.15:25000/271e352934d8bd01cd115a3149e0ff23/be48c19219bf --worker
 
-If the node you are adding is not reachable through the default interface you ca                                     n use one of the following:
+If the node you are adding is not reachable through the default interface you can use one of the following:
 microk8s join 10.0.2.15:25000/271e352934d8bd01cd115a3149e0ff23/be48c19219bf
 microk8s join 192.168.1.11:25000/271e352934d8bd01cd115a3149e0ff23/be48c19219bf
 microk8s join 172.17.0.1:25000/271e352934d8bd01cd115a3149e0ff23/be48c19219bf
