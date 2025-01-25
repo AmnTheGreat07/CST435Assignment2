@@ -218,8 +218,8 @@ microk8s kubectl exec -it "Your pods name" -- /bin/bash
 11. Set hosts & Run MPI & Test   
 Follow the same steps (9,10,11) as in the [Minikube seection](#how-to-run-in-k8s-minikube).
 
----
-Note test.py is signal thread multiplication. You can see the difference between the signal thread and MPI.  
+## Notice
+`test.py` is signal thread multiplication. You can see the difference between the signal thread and MPI.  
 
 For example:
 ```python
