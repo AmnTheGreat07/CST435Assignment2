@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hadoop-mapreduce
+  labels:
+    app: hadoop
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: hadoop
+  template:
+    metadata:
+      labels:
+        app: hadoop
+    spec:
+      containers:
+      - name: hadoop-node
+        image: hadoop_mapreduce_image:latest
+        command: ["/bin/bash", "-c", "--"]
+        args:
+          - |
+            /start-hadoop.sh &&
+            tail -f /dev/null
+        ports:
+        - containerPort: 8088 # YARN Resource Manager
+        - containerPort: 9870 # HDFS Web UI
+        - containerPort: 9864 # DataNode Service
+        - containerPort: 9866 # DataNode Secure
+      volumes:
+      - name: hadoop-data
+        hostPath:
+          path: /data/hadoop
